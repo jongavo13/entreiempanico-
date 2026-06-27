@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Entrei em Pânico?</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Source+Serif+4:wght@400;600&display=swap');
+
+  :root {
+    --ink: #F1EBDD;
+    --bg: #0B0B0D;
+    --surface: #15151A;
+    --gold: #C9A227;
+    --vermelho: #C23B2E;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Source Serif 4', Georgia, serif; }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 48px 20px 64px; }
+
+  .eyebrow { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.25em; text-transform: uppercase; color: var(--gold); text-align: center; margin: 0 0 8px; }
+  h1 { font-family: 'Oswald', sans-serif; font-size: 40px; text-transform: uppercase; text-align: center; letter-spacing: 0.01em; line-height: 1.05; margin: 0; font-weight: 700; }
+  .subtitle { text-align: center; font-size: 14px; opacity: 0.7; max-width: 360px; margin: 12px auto 0; }
+
+  .panel { background: var(--surface); border: 1px solid rgba(241,235,221,0.12); border-radius: 16px; padding: 24px; margin: 40px 0 48px; }
+  .panel-label { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(241,235,221,0.5); text-align: center; margin: 0 0 20px; }
+
+  .gauge-wrap { width: 220px; height: 120px; margin: 0 auto; position: relative; }
+  .gauge-mask { position: absolute; left: 0; top: 0; width: 220px; height: 110px; overflow: hidden; }
+  .gauge-circle {
+    width: 220px; height: 220px; border-radius: 50%;
+    background: conic-gradient(from -90deg, #F1EBDD 0% 10%, #3A5C8C 10% 20%, #C9A227 20% 30%, #C23B2E 30% 40%, #7A1C1C 40% 50%, #0B0B0D 50% 100%);
+    -webkit-mask-image: radial-gradient(circle at center, transparent 60%, black 61%);
+    mask-image: radial-gradient(circle at center, transparent 60%, black 61%);
+  }
+  .gauge-tick { position: absolute; top: 90px; font-family: ui-monospace, monospace; font-size: 10px; opacity: 0.45; }
+  .gauge-tick.left { left: 2px; }
+  .gauge-tick.right { right: 2px; }
+  .needle {
+    position: absolute; left: 110px; top: 110px; width: 4px; height: 90px; margin-left: -2px; margin-top: -90px;
+    background: linear-gradient(to top, #C23B2E, #F1EBDD); transform-origin: 2px 90px; border-radius: 2px;
+    box-shadow: 0 0 6px rgba(194,59,46,0.55); transition: transform 0.35s cubic-bezier(.34,1.56,.64,1);
+    transform: rotate(-10deg);
+  }
+  .pivot { position: absolute; left: 110px; top: 110px; width: 14px; height: 14px; margin-left: -7px; margin-top: -7px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 8px rgba(201,162,39,0.7); }
+
+  .readout { text-align: center; margin: 4px 0 20px; }
+  .readout .num { font-family: 'Oswald', sans-serif; font-weight: 700; font-size: 30px; }
+  .readout .lbl { font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; margin-left: 8px; }
+
+  input[type=range] { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 3px; background: rgba(241,235,221,0.15); }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: var(--gold); border: 2px solid var(--bg); cursor: pointer; box-shadow: 0 0 0 4px rgba(201,162,39,0.22); }
+  input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: var(--gold); border: 2px solid var(--bg); cursor: pointer; box-shadow: 0 0 0 4px rgba(201,162,39,0.22); }
+
+  .field { margin-top: 16px; }
+  .field label { display: block; font-family: ui-monospace, monospace; font-size: 11px; letter-spacing: 0.05em; text-transform: uppercase; color: rgba(241,235,221,0.5); margin-bottom: 6px; }
+  .field input[type=text], .field textarea {
+    width: 100%; background: var(--bg); border: 1px solid rgba(241,235,221,0.15); color: var(--ink);
+    padding: 10px 12px; border-radius: 8px; font-family: 'Source Serif 4', Georgia, serif; font-size: 15px;
+  }
+  .field textarea { resize: vertical; }
+  .charcount { text-align: right; font-family: ui-monospace, monospace; font-size: 10px; opacity: 0.4; margin-top: 4px; }
+
+  .msg-error { color: var(--vermelho); font-size: 13px; margin: 12px 0 0; }
+  .msg-ok { color: var(--gold); font-size: 13px; margin: 12px 0 0; }
+
+  .submit-btn { width: 100%; margin-top: 16px; background: var(--gold); color: var(--bg); font-family: 'Oswald', sans-serif; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; font-size: 14px; padding: 13px 0; border: none; border-radius: 8px; cursor: pointer; }
+  .submit-btn:disabled { opacity: 0.6; cursor: default; }
+
+  .feed-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 20px; }
+  .feed-head h2 { font-family: 'Oswald', sans-serif; font-size: 14px; letter-spacing: 0.06em; text-transform: uppercase; color: rgba(241,235,221,0.7); margin: 0; font-weight: 600; }
+  .feed-count { font-family: ui-monospace, monospace; font-size: 12px; opacity: 0.4; }
+
+  .empty { text-align: center; padding: 32px 0; opacity: 0.6; font-size: 14px; }
+  .loading-row { display: flex; justify-content: center; padding: 40px 0; }
+  .spinner { width: 22px; height: 22px; border: 3px solid rgba(201,162,39,0.25); border-top-color: var(--gold); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .post { background: var(--surface); border-radius: 8px; padding: 16px; margin-bottom: 12px; border-top: 1px solid rgba(241,235,221,0.06); border-right: 1px solid rgba(241,235,221,0.06); border-bottom: 1px solid rgba(241,235,221,0.06); }
+  .post-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 8px; }
+  .post-meta { font-family: ui-monospace, monospace; font-size: 10px; opacity: 0.4; }
+  .post-badge { font-family: ui-monospace, monospace; font-size: 10px; letter-spacing: 0.04em; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; white-space: nowrap; }
+  .post-name { font-family: 'Oswald', sans-serif; font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .post-story { font-size: 14px; line-height: 1.6; color: rgba(241,235,221,0.85); margin: 0; white-space: pre-wrap; }
+  .post-remove { font-family: ui-monospace, monospace; font-size: 10px; opacity: 0.5; background: none; border: none; color: var(--ink); cursor: pointer; text-decoration: underline; margin-top: 8px; padding: 0; }
+
+  footer { text-align: center; margin-top: 56px; padding-top: 24px; border-top: 1px solid rgba(241,235,221,0.1); }
+  footer p { font-family: 'Source Serif 4', Georgia, serif; font-size: 12px; opacity: 0.5; max-width: 340px; margin: 0 auto; }
+
+  @keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(194,59,46,0.55); } 50% { box-shadow: 0 0 0 6px rgba(194,59,46,0); } }
+  .pulse-badge { animation: pulseGlow 1.8s ease-out infinite; }
+
+  button:focus-visible, input:focus-visible, textarea:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <p class="eyebrow">registro público de dor</p>
+      <h1>Entrei em Pânico?</h1>
+      <p class="subtitle">Um lugar pra registrar a dor que você sentiu — e quanto ela pesou.</p>
+    </header>
+
+    <section class="panel">
+      <p class="panel-label">quanto isso pesou?</p>
+
+      <div class="gauge-wrap">
+        <div class="gauge-mask"><div class="gauge-circle"></div></div>
+        <span class="gauge-tick left">1</span>
+        <span class="gauge-tick right">10</span>
+        <div class="needle" id="needle"></div>
+        <div class="pivot"></div>
+      </div>
+
+      <div class="readout">
+        <span class="num" id="levelNum">5</span>
+        <span class="lbl" id="levelLbl">MODERADA</span>
+      </div>
+
+      <input type="range" id="levelRange" min="1" max="10" step="1" value="5" aria-label="Nível de dor, de 1 a 10">
+
+      <div class="field">
+        <label for="nameInput">Seu nome</label>
+        <input type="text" id="nameInput" maxlength="40" placeholder="Como você quer aparecer">
+      </div>
+      <div class="field">
+        <label for="storyInput">O que aconteceu</label>
+        <textarea id="storyInput" rows="4" maxlength="800" placeholder="Conte a história. Pode ser curta."></textarea>
+        <div class="charcount" id="charCount">0/800</div>
+      </div>
+
+      <div id="formMsg" aria-live="polite"></div>
+
+      <button type="button" class="submit-btn" id="submitBtn">Publicar registro</button>
+    </section>
+
+    <section>
+      <div class="feed-head">
+        <h2>Registros</h2>
+        <span class="feed-count" id="feedCount">0 registros</span>
+      </div>
+      <div id="feed"></div>
+    </section>
+
+    <footer>
+      <p>Isso aqui é um espaço pra desabafar — não substitui apoio profissional. Se a dor estiver pesada demais, procure alguém de confiança ou um profissional de saúde mental.</p>
+    </footer>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+
+  var MAX_STORED_POSTS = 300;
+
+  // Usa o armazenamento compartilhado do artifact quando disponível.
+  // Fora desse ambiente (arquivo aberto direto no navegador), cai num
+  // armazenamento só em memória — funciona na hora, mas não é
+  // compartilhado entre visitantes nem sobrevive a um recarregamento.
+  var storage = window.storage || (function () {
+    var mem = {};
+    return {
+      get: function (key, shared) {
+        var k = (shared ? "shared:" : "local:") + key;
+        return new Promise(function (resolve, reject) {
+          if (!(k in mem)) { reject(new Error("not found")); return; }
+          resolve({ key: key, value: mem[k], shared: !!shared });
+        });
+      },
+      set: function (key, value, shared) {
+        var k = (shared ? "shared:" : "local:") + key;
+        return new Promise(function (resolve) {
+          mem[k] = value;
+          resolve({ key: key, value: value, shared: !!shared });
+        });
+      }
+    };
+  })();
+
+  var posts = [];
+  var loading = true;
+  var currentLevel = 5;
+  var myPostIds = new Set();
+
+  function zoneFor(level) {
+    if (level <= 2) return { label: "Leve", accent: "#F1EBDD", badgeBg: "#F1EBDD", badgeText: "#0B0B0D", badgeBorder: "1px solid rgba(241,235,221,0.4)" };
+    if (level <= 4) return { label: "Moderada-leve", accent: "#3A5C8C", badgeBg: "#3A5C8C", badgeText: "#F1EBDD", badgeBorder: "1px solid rgba(58,92,140,0.6)" };
+    if (level <= 6) return { label: "Moderada", accent: "#C9A227", badgeBg: "#C9A227", badgeText: "#0B0B0D", badgeBorder: "1px solid rgba(201,162,39,0.6)" };
+    if (level <= 8) return { label: "Intensa", accent: "#C23B2E", badgeBg: "#C23B2E", badgeText: "#F1EBDD", badgeBorder: "1px solid rgba(194,59,46,0.6)" };
+    return { label: "Extrema", accent: "#7A1C1C", badgeBg: "#000000", badgeText: "#C9A227", badgeBorder: "1px solid #7A1C1C", pulse: true };
+  }
+
+  function formatRelativo(iso) {
+    var date = new Date(iso);
+    var diffSec = Math.floor((Date.now() - date.getTime()) / 1000);
+    if (diffSec < 60) return "agora mesmo";
+    var diffMin = Math.floor(diffSec / 60);
+    if (diffMin < 60) return "há " + diffMin + " min";
+    var diffH = Math.floor(diffMin / 60);
+    if (diffH < 24) return "há " + diffH + "h";
+    var diffD = Math.floor(diffH / 24);
+    if (diffD < 30) return "há " + diffD + "d";
+    return date.toLocaleDateString("pt-BR");
+  }
+
+  function updateGauge(level) {
+    var z = zoneFor(level);
+    var rotation = -90 + ((level - 1) / 9) * 180;
+    document.getElementById("needle").style.transform = "rotate(" + rotation + "deg)";
+    var numEl = document.getElementById("levelNum");
+    numEl.textContent = level;
+    numEl.style.color = z.accent;
+    var lblEl = document.getElementById("levelLbl");
+    lblEl.textContent = z.label.toUpperCase();
+    lblEl.style.color = z.accent;
+  }
+
+  function renderFeed() {
+    var feed = document.getElementById("feed");
+    feed.innerHTML = "";
+    document.getElementById("feedCount").textContent =
+      posts.length + " " + (posts.length === 1 ? "registro" : "registros");
+
+    if (loading) {
+      var row = document.createElement("div");
+      row.className = "loading-row";
+      var spinner = document.createElement("div");
+      spinner.className = "spinner";
+      row.appendChild(spinner);
+      feed.appendChild(row);
+      return;
+    }
+
+    if (posts.length === 0) {
+      var emptyP = document.createElement("p");
+      emptyP.className = "empty";
+      emptyP.textContent = "Nenhum registro ainda. Seja a primeira pessoa a contar o que pesou.";
+      feed.appendChild(emptyP);
+      return;
+    }
+
+    posts.forEach(function (post, idx) {
+      var z = zoneFor(post.level);
+      var num = String(posts.length - idx).padStart(3, "0");
+
+      var card = document.createElement("div");
+      card.className = "post";
+      card.style.borderLeft = "4px solid " + z.accent;
+
+      var top = document.createElement("div");
+      top.className = "post-top";
+
+      var meta = document.createElement("span");
+      meta.className = "post-meta";
+      meta.textContent = "Nº" + num + " · " + formatRelativo(post.createdAt);
+
+      var badge = document.createElement("span");
+      badge.className = "post-badge" + (z.pulse ? " pulse-badge" : "");
+      badge.style.background = z.badgeBg;
+      badge.style.color = z.badgeText;
+      badge.style.border = z.badgeBorder;
+      badge.textContent = post.level + " · " + z.label;
+
+      top.appendChild(meta);
+      top.appendChild(badge);
+
+      var nameEl = document.createElement("p");
+      nameEl.className = "post-name";
+      nameEl.textContent = post.name;
+
+      var storyEl = document.createElement("p");
+      storyEl.className = "post-story";
+      storyEl.textContent = post.story;
+
+      card.appendChild(top);
+      card.appendChild(nameEl);
+      card.appendChild(storyEl);
+
+      if (myPostIds.has(post.id)) {
+        var removeBtn = document.createElement("button");
+        removeBtn.type = "button";
+        removeBtn.className = "post-remove";
+        removeBtn.textContent = "remover meu registro";
+        removeBtn.addEventListener("click", function () { handleDelete(post.id); });
+        card.appendChild(removeBtn);
+      }
+
+      feed.appendChild(card);
+    });
+  }
+
+  function loadPosts(silent) {
+    return storage.get("posts", true).then(function (res) {
+      var parsed = res && res.value ? JSON.parse(res.value) : [];
+      posts = Array.isArray(parsed) ? parsed : [];
+    }).catch(function () {
+      if (!silent) posts = [];
+    }).finally(function () {
+      loading = false;
+      renderFeed();
+    });
+  }
+
+  function showFormMessage(text, isError) {
+    var msgEl = document.getElementById("formMsg");
+    msgEl.innerHTML = "";
+    var p = document.createElement("p");
+    p.className = isError ? "msg-error" : "msg-ok";
+    p.textContent = text;
+    msgEl.appendChild(p);
+    if (!isError) {
+      setTimeout(function () {
+        if (msgEl.contains(p)) msgEl.removeChild(p);
+      }, 3500);
+    }
+  }
+
+  function setSubmitting(val) {
+    var btn = document.getElementById("submitBtn");
+    btn.disabled = val;
+    btn.textContent = val ? "Publicando..." : "Publicar registro";
+  }
+
+  function handleSubmit() {
+    var nameInput = document.getElementById("nameInput");
+    var storyInput = document.getElementById("storyInput");
+    var name = nameInput.value.trim();
+    var story = storyInput.value.trim();
+
+    document.getElementById("formMsg").innerHTML = "";
+
+    if (!name) { showFormMessage("Escreva seu nome antes de publicar.", true); return; }
+    if (!story) { showFormMessage("Conte um pouco do que aconteceu.", true); return; }
+
+    setSubmitting(true);
+
+    var newPost = {
+      id: Date.now() + "-" + Math.random().toString(36).slice(2, 8),
+      name: name.slice(0, 40),
+      story: story.slice(0, 800),
+      level: currentLevel,
+      createdAt: new Date().toISOString()
+    };
+
+    storage.get("posts", true).then(function (res) {
+      var current = res && res.value ? JSON.parse(res.value) : [];
+      if (!Array.isArray(current)) current = [];
+      return current;
+    }).catch(function () {
+      return [];
+    }).then(function (current) {
+      var updated = [newPost].concat(current).slice(0, MAX_STORED_POSTS);
+      return storage.set("posts", JSON.stringify(updated), true).then(function (result) {
+        if (!result) throw new Error("save failed");
+        posts = updated;
+        myPostIds.add(newPost.id);
+        nameInput.value = "";
+        storyInput.value = "";
+        document.getElementById("charCount").textContent = "0/800";
+        currentLevel = 5;
+        document.getElementById("levelRange").value = 5;
+        updateGauge(5);
+        renderFeed();
+        showFormMessage("Registro publicado.", false);
+      });
+    }).catch(function () {
+      showFormMessage("Não consegui publicar agora. Tenta de novo em um instante.", true);
+    }).finally(function () {
+      setSubmitting(false);
+    });
+  }
+
+  function handleDelete(id) {
+    storage.get("posts", true).then(function (res) {
+      var current = res && res.value ? JSON.parse(res.value) : [];
+      if (!Array.isArray(current)) current = [];
+      var updated = current.filter(function (p) { return p.id !== id; });
+      return storage.set("posts", JSON.stringify(updated), true).then(function () {
+        posts = updated;
+        renderFeed();
+      });
+    }).catch(function () {});
+  }
+
+  document.getElementById("levelRange").addEventListener("input", function (e) {
+    currentLevel = Number(e.target.value);
+    updateGauge(currentLevel);
+  });
+  document.getElementById("storyInput").addEventListener("input", function (e) {
+    document.getElementById("charCount").textContent = e.target.value.length + "/800";
+  });
+  document.getElementById("submitBtn").addEventListener("click", handleSubmit);
+
+  updateGauge(5);
+  renderFeed();
+  loadPosts(false);
+  setInterval(function () { loadPosts(true); }, 7000);
+})();
+</script>
+</body>
+</html>
